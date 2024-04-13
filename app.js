@@ -28,6 +28,11 @@ app.use('/api/v1/users', userRouter);
 //xử lí khi đường route không khớp với bất kì route nào được định nghĩa
 
 app.all('*', (req, res, next) => {
+  //Khi chưa có globalError
+  //res.status(404).json({
+  //status: 'failed',
+  //message: "`Can't find ${req.originalUrl} on this server`"
+  // })
   next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
 });
 
