@@ -1,7 +1,7 @@
 const express = require('express');
 const tourController = require('./../controller/tourController');
+const authController = require('./../controller/authController');
 const route = express.Router();
-//Khi có một yêu cầu HTTP tới /tour/123, Express sẽ tự động trích xuất giá trị 123 và gán cho tham số id. Middleware tourController.checkId sẽ được gọi trong quá trình này.
 
 route
   .route('/top-5-cheap')
@@ -11,13 +11,17 @@ route.route('/tour-stats').get(tourController.getTourStarts);
 
 route
   .route('/')
-  .get(tourController.getAllTours)
+  .get(authController.protect, tourController.getAllTours)
   .post(tourController.createTour);
 
 route
   .route('/:id')
-  .get(tourController.getTour)
+  .get(authController.protect, tourController.getTour)
   .patch(tourController.updateTour)
-  .delete(tourController.deleteTour);
+  .delete(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'),
+    tourController.deleteTour,
+  );
 
 module.exports = route;

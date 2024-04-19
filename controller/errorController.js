@@ -10,7 +10,11 @@ const handleDuplicateDB = (err) => {
   const message = `Duplicate field value: x. Please use another value different ${value}`;
   return new AppError(message, 400);
 };
+const handleJWTError = () =>
+  new AppError('Invalid token. Please login again!', 401);
 
+const handleJWTexprired = () =>
+  new AppError('Your token has exprired! Please login again', 401);
 const handleValidationErrorDB = (err) => {
   const errors = Object.values(err.errors).map((el) => el.message);
   const message = `Invalid input data. ${errors.join('. ')}`;
@@ -59,6 +63,8 @@ module.exports = (err, req, res, next) => {
     if (err.name === 'CastError') error = handleCastErrorDB(error);
     if (err.code === 11000) error = handleDuplicateDB(error);
     if (err.name === 'ValidationError') error = handleValidationErrorDB(error);
+    if (err.name === 'JsonWebTokenError') error = handleJWTError();
+    if (err.name === 'TokenExpiredError') error = handleJWTexprired();
 
     sendErrorProd(error, res);
   }
