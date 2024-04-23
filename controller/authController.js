@@ -11,17 +11,21 @@ const signToken = (id) => {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
-exports.signup = catchAsync(async (req, res, next) => {
-  const newUser = await User.create(req.body);
-  const token = signToken(newUser._id);
 
-  res.status(201).json({
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+
+  res.status(statusCode).json({
     status: 'success',
     token,
     data: {
-      user: newUser,
+      user: user,
     },
   });
+};
+exports.signup = catchAsync(async (req, res, next) => {
+  const newUser = await User.create(req.body);
+  createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -34,11 +38,7 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
   }
-  const token = signToken(user._id);
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createSendToken(user, 201, res);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -151,9 +151,32 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   await user.save();
   //4) Login the user in , send JWT
-  const token = signToken(user._id);
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createSendToken(user, 201, res);
+});
+
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // 1) Get user from collection
+  //Lấy từ protect
+  const currentUser = await User.findById(req.user.id).select('+password');
+  if (!currentUser) {
+    return next(new AppError('Account not existed', 400));
+  }
+  //2) Check if posted cureent password is correct
+
+  if (
+    !(await currentUser.correctPassword(
+      req.body.passwordCurrent,
+      currentUser.password,
+    ))
+  ) {
+    return next(new AppError('Your current password wrong', 401));
+  }
+  //3) if so , update password
+
+  //Cach viet 2
+  currentUser.password = req.body.password;
+  currentUser.passwordConfirm = req.body.passwordConfirm;
+  await currentUser.save();
+  //4) Log user in , send jwt
+  createSendToken(currentUser, 201, res);
 });
