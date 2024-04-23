@@ -11,7 +11,7 @@ route.route('/tour-stats').get(tourController.getTourStarts);
 
 route
   .route('/')
-  .get(authController.protect, tourController.getAllTours)
+  .get(tourController.getAllTours)
   .post(tourController.createTour);
 
 route

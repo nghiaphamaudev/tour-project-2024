@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 require('dotenv').config({ path: './config.env' });
 const app = require('./app');
 const DB = process.env.DATABASE_LOCAL;
+const rateLimit = require('express-rate-limit');
+const helmt = require('helmet');
+
+// Security http heasers
 process.on('uncaughtException', (err) => {
   console.log('UNHANDLED EXEPTION!🎆 Shutting down...');
   console.log(err.name, err.message);
@@ -9,6 +13,14 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
+//Limit request from same Api
+const limiter = rateLimit({
+  max: 100,
+  windowMs: 60 * 60 * 1000,
+  message: 'Too many requests',
+});
+
+app.use('/api', limiter);
 const mongooseConnect = async (db) => {
   try {
     await mongoose.connect(db);
