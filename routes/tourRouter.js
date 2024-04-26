@@ -1,27 +1,31 @@
 const express = require('express');
 const tourController = require('./../controller/tourController');
 const authController = require('./../controller/authController');
-const route = express.Router();
+const reviewRouter = require('./reviewRouter');
+const router = express.Router();
 
-route
+router.use('/:id/reviews', reviewRouter);
+// Trong khi get 1 id Tour mà 1 đờng dẫn khớp với bên trên thì sẽ sử dụng reviewRouter
+
+router
   .route('/top-5-cheap')
   .get(tourController.aliasTours, tourController.getAllTours);
 
-route.route('/tour-stats').get(tourController.getTourStarts);
+router.route('/tour-stats').get(tourController.getTourStarts);
 
-route
+router
   .route('/')
   .get(tourController.getAllTours)
   .post(tourController.createTour);
 
-route
+router
   .route('/:id')
-  .get(authController.protect, tourController.getTour)
+  .get(tourController.getTour)
   .patch(tourController.updateTour)
   .delete(
-    authController.protect,
-    authController.restrictTo('admin', 'lead-guide'),
+    // authController.protect,
+    // authController.restrictTo('admin', 'lead-guide'),
     tourController.deleteTour,
   );
 
-module.exports = route;
+module.exports = router;

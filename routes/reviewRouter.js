@@ -1,0 +1,15 @@
+const express = require('express');
+const reviewController = require('./../controller/reviewController');
+const authController = require('./../controller/authController');
+const route = express.Router({ mergeParams: true });
+
+route
+  .route('/')
+  .get(reviewController.getAllReviews)
+  .post(
+    authController.protect,
+    authController.restrictTo('user'),
+    reviewController.createReview,
+  );
+
+module.exports = route;

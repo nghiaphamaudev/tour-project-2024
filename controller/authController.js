@@ -68,13 +68,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   //promisify dùng để biển đổi 1 hàm callback thành promise
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-  //Kiểm tra xem id có cofnt hực sựn tồn tại trong db hay ko
-  // Trường hợp khi đăng nhập hoặc đăng kí xong thì người khác thực sự có token và secret_Jwt
-  //và trường hợp bị sau ngay sau khires, login
-  //Cách kiểm tra khi đăng nhập xong người dùng đã thay đổi mnaajt khẩu trc khi truy cập
-  //Thay vì chỉ lưu user_id vafo phần payload ta thêm cả hasspassword
-  // so sánh với thời gian tạo token mới nhất với trạng thái cập nhật của user
-  //hoạc sau khi thay đổi pass yêu cầu ng dùng đănh nhập lại để refresh lại token mới
   const currentUser = await User.findById(decoded.id);
   if (!currentUser) {
     return next(
@@ -87,6 +80,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     );
   }
   req.user = currentUser;
+  console.log(currentUser);
   next();
 });
 
