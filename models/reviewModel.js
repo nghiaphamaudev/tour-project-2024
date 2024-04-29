@@ -26,6 +26,8 @@ const reviewSchema = new mongoose.Schema(
 );
 
 reviewSchema.pre(/^find/, function (next) {
+  //nếu mở rộng ở đây thì đường router {{URL}}api/v1/tours/662f60b8db7f42a08353b0d6/reviews
+  //sẽ bị lặp dữ liệu
   this.populate({
     path: 'user',
     select: 'name photo',

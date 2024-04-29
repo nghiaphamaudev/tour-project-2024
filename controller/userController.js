@@ -1,6 +1,7 @@
 const AppError = require('../utils/appError');
 const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
+const factory = require('./handleFactory');
 
 const filterObj = (obj, ...allowedFiels) => {
   let newObj = {};
@@ -9,18 +10,6 @@ const filterObj = (obj, ...allowedFiels) => {
   });
   return newObj;
 };
-
-exports.getAllUsers = catchAsync(async (req, res) => {
-  const users = await User.find(); //Lấy ra chuỗi truy vấn
-  //SEND RESPOND
-  res.status(200).json({
-    status: 'success',
-    result: users.length,
-    data: {
-      users,
-    },
-  });
-});
 
 exports.updateMe = catchAsync(async (req, res, next) => {
   if (req.body.password || req.body.passwordConfirm) {
@@ -55,7 +44,7 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
 exports.getUser = (req, res) => {
   res.status(500).json({
     status: 'error',
-    message: 'This router not yet defined',
+    message: 'This router not yet signup please !!',
   });
 };
 
@@ -66,15 +55,9 @@ exports.createUser = (req, res) => {
   });
 };
 
-exports.deleteUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'This router not yet defined',
-  });
-};
-exports.updateUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'This router not yet defined',
-  });
-};
+exports.getAllUsers = factory.getAll(User);
+
+exports.deleteUser = factory.deleteOne(User);
+
+//Khong cap nhat password
+exports.updateUser = factory.updateOne(User);
