@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');
 const { Schema } = mongoose;
-const validator = require('validator');
-const User = require('./userModel');
+
 //mô tả cấu trúc dữ liệu của 1 tour trong monggodb
 const tourSchema = new Schema(
   {
@@ -13,6 +13,7 @@ const tourSchema = new Schema(
       minlength: [10, 'A tour name must have less or equal then 40 characters'],
       // validate: [validator.isAlpha, 'Tour name must only contain character'],
     },
+    slug: String,
     duration: {
       type: Number,
       required: [true, 'A tour must have a group size'],
@@ -38,6 +39,7 @@ const tourSchema = new Schema(
       default: 4.5,
       min: [1, 'Rating must be above 1.0'],
       max: [5, 'Rating must be below 5'],
+      set: (val) => Math.round(val * 10) / 10,
     },
     ratingsQuantity: {
       type: Number,
@@ -114,6 +116,9 @@ const tourSchema = new Schema(
 //   next();
 // });
 
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
 tourSchema.pre(/^find/, function (next) {
   //this trỏ đến đổi tượng truy vấn hiện tại
   this.populate({
@@ -127,6 +132,15 @@ tourSchema.virtual('durationWeek').get(function () {
   return this.duration / 7;
 });
 
+tourSchema.pre('save', function (next) {
+  this.slug = slugify(this.name, { lower: true });
+  next();
+});
+
+// tourSchema.post('save', function (doc, next) {
+//   console.log(doc);
+//   next();
+// });
 //Virtual populate
 
 tourSchema.virtual('reviews', {

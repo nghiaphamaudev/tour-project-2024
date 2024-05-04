@@ -41,7 +41,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-  if (!email && !password) {
+  if (!email || !password) {
     return next(new AppError('Please provide email and password', 400));
   }
   //select lay them truong password boi vi de mac dinh khon glay truong password
@@ -80,7 +80,6 @@ exports.protect = catchAsync(async (req, res, next) => {
     );
   }
   req.user = currentUser;
-  console.log(currentUser);
   next();
 });
 

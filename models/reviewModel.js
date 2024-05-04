@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Tour = require('./tourModel');
 const reviewSchema = new mongoose.Schema(
   {
     review: { type: String, required: [true, 'Review can not empty'] },
@@ -25,9 +26,8 @@ const reviewSchema = new mongoose.Schema(
   },
 );
 
+reviewSchema.index({ user: 1, tour: 1 }, { unique: true });
 reviewSchema.pre(/^find/, function (next) {
-  //nếu mở rộng ở đây thì đường router {{URL}}api/v1/tours/662f60b8db7f42a08353b0d6/reviews
-  //sẽ bị lặp dữ liệu
   this.populate({
     path: 'user',
     select: 'name photo',
@@ -35,5 +35,52 @@ reviewSchema.pre(/^find/, function (next) {
   next();
 });
 
+reviewSchema.statics.calcRatings = async function (tourId) {
+  const stats = await this.aggregate([
+    {
+      $match: { tour: tourId },
+    },
+    {
+      $group: {
+        _id: '$tour',
+        nRating: { $sum: 1 },
+        avgRating: { $avg: '$rating' },
+      },
+    },
+  ]);
+  if (stats.length > 0) {
+    await Tour.findByIdAndUpdate(tourId, {
+      ratingsAverage: stats[0].avgRating,
+      ratingsQuantity: stats[0].nRating,
+    });
+  } else {
+    await Tour.findByIdAndUpdate(tourId, {
+      ratingsAverage: 4.5, //default
+      ratingsQuantity: 0,
+    });
+  }
+};
+// khi lưu document này vào db nó sẽ gọi mthod tĩnh để xử lí các thông tin
+//Sau khi tạo mới cũng gọi lại để tính toán lại rating
+
+reviewSchema.post('save', function () {
+  this.constructor.calcRatings(this.tour);
+});
+
+//findByIdAndUpdate
+//findByIdAndDelete
+
+//Dùng để lấy lại document khi chưa được update or delete
+reviewSchema.pre(/^findOneAnd/, async function (next) {
+  this.r = await this.clone().findOne();
+  console.log(this.r);
+  next();
+});
+//được thực hiện sau khi findOneAndUpdate or Delete
+reviewSchema.post(/^findOneAnd/, async function () {
+  await this.r.constructor.calcRatings(this.r.tour);
+});
+
 const Review = mongoose.model('Review', reviewSchema);
+
 module.exports = Review;

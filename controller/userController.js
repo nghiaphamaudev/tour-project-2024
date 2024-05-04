@@ -41,12 +41,6 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
     data: null,
   });
 });
-exports.getUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'This router not yet signup please !!',
-  });
-};
 
 exports.createUser = (req, res) => {
   res.status(500).json({
@@ -54,6 +48,13 @@ exports.createUser = (req, res) => {
     message: 'This router not yet defined',
   });
 };
+
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user._id;
+  next();
+};
+
+exports.getUser = factory.getOne(User);
 
 exports.getAllUsers = factory.getAll(User);
 

@@ -44,6 +44,7 @@ exports.createOne = (Model) =>
 
 exports.getOne = (Model, popOptions) =>
   catchAsync(async (req, res, next) => {
+    console.log(req.params.id); //5c88fa8cf4afda39709c2955
     let query = Model.findById(req.params.id);
     if (popOptions) query = query.populate(popOptions);
     const doc = await query;
@@ -53,16 +54,17 @@ exports.getOne = (Model, popOptions) =>
     res.status(200).json({
       status: 'success',
       data: {
-        doc,
+        data: doc,
       },
     });
   });
 
-exports.getAll = (Model, idTour) =>
+exports.getAll = (Model) =>
   catchAsync(async (req, res, next) => {
+    //To allow for nested GET Reviews on tour (hack)
     let filter;
     if (req.params.id) filter = { tour: req.params.id };
-    let features = new APIFeatures(Model.find(), req.query)
+    let features = new APIFeatures(Model.find(filter), req.query)
       .filter()
       .sort()
       .limitFiedls()
@@ -75,7 +77,7 @@ exports.getAll = (Model, idTour) =>
       status: 'success',
       result: docs.length,
       data: {
-        docs,
+        data: docs,
       },
     });
   });
