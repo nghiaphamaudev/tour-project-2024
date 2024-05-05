@@ -24,8 +24,15 @@ exports.getTour = catchAsync(async (req, res, next) => {
     tour,
   });
 });
+
 exports.getLoginForm = catchAsync(async (req, res) => {
   res.status(200).render('login', {
     title: 'Login into your account',
+  });
+});
+exports.getAccount = catchAsync(async (req, res) => {
+  res.status(200).render('account', {
+    title: 'My account',
+    user: res.locals.user,
   });
 });

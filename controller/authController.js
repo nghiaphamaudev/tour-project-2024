@@ -92,13 +92,12 @@ exports.protect = catchAsync(async (req, res, next) => {
     );
   }
   req.user = currentUser;
+  res.locals.user = currentUser;
   next();
 });
 
 //Only for rended pages, no errors
 exports.isLoggedIn = async (req, res, next) => {
-  //Kiểm tra token có thực sự đi kèm với header ko
-
   if (req.cookies.jwt) {
     try {
       const decoded = await promisify(jwt.verify)(
