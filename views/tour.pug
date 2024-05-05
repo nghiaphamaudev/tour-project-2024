@@ -67,10 +67,7 @@ block content
         each img,index in tour.images 
             .picture-box
                 img.picture-box__img(src=`/img/tours/${img}`, alt=` ${tour.name} ${index+1}`, class=`picture-box__img--${index+1}`)
-
-    section.section-map
-        #map(data-locations=`${JSON.stringify(tour.locations)}`)
-
+      
     section.section-reviews
         .reviews
             each review in tour.reviews

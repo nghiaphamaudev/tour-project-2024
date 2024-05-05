@@ -12,8 +12,8 @@ const tourRouter = require('./routes/tourRouter');
 const userRouter = require('./routes/userRouter');
 const reviewRouter = require('./routes/reviewRouter');
 const viewRouter = require('./routes/viewRouter');
-
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
@@ -21,7 +21,32 @@ app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'", 'data:', 'blob:', 'https://*.cloudflare.com'],
+
+      fontSrc: ["'self'", 'https:', 'data:'],
+
+      scriptSrc: ["'self'", 'unsafe-inline'],
+
+      scriptSrcElem: ["'self'", 'https:', 'https://*.cloudflare.com'],
+
+      styleSrc: [
+        "'self'",
+        'https:',
+        "'sha256-2LsQpejoyTLfBAE8bzIvpZiyalNp3uIriW3eZ05/XRc='",
+      ],
+
+      connectSrc: [
+        "'self'",
+        'data:',
+        'https://*.cloudflare.com',
+        'ws://127.0.0.1:65253', // Định dạng phải là ws://127.0.0.1:65253
+      ],
+    },
+  }),
+);
 //limit request
 const limiter = rateLimit({
   max: 100,
@@ -35,6 +60,7 @@ app.use('/api', limiter);
 
 //Reading data from req.body
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 //Data sanitiation against NoSql  query injection
 app.use(mongoSanitize());
 
@@ -64,11 +90,11 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
+  console.log(req.cookies);
   next();
 });
 
 //áp dụng tour router cho mọi router bắt đầu bằng 'api/v1/tours
-
 app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
