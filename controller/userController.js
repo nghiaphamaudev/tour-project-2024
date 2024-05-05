@@ -3,6 +3,7 @@ const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const factory = require('./handleFactory');
 
+// neu cac phan tu co trong allwofiel maf ton tai trong object key => tao ra mang moi
 const filterObj = (obj, ...allowedFiels) => {
   let newObj = {};
   Object.keys(obj).forEach((el) => {
@@ -12,6 +13,7 @@ const filterObj = (obj, ...allowedFiels) => {
 };
 
 exports.updateMe = catchAsync(async (req, res, next) => {
+  console.log(req.body);
   if (req.body.password || req.body.passwordConfirm) {
     return next(
       new AppError(

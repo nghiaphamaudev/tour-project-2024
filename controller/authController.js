@@ -196,6 +196,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
+  console.log(req.body);
   // 1) Get user from collection
   //Lấy từ protect
   const currentUser = await User.findById(req.user.id).select('+password');

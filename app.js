@@ -25,28 +25,27 @@ app.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'", 'data:', 'blob:', 'https://*.cloudflare.com'],
-
       fontSrc: ["'self'", 'https:', 'data:'],
-
       scriptSrc: ["'self'", 'unsafe-inline'],
-
       scriptSrcElem: ["'self'", 'https:', 'https://*.cloudflare.com'],
-
-      styleSrc: [
-        "'self'",
-        'https:',
-        "'sha256-2LsQpejoyTLfBAE8bzIvpZiyalNp3uIriW3eZ05/XRc='",
-      ],
-
       connectSrc: [
         "'self'",
         'data:',
         'https://*.cloudflare.com',
-        'ws://127.0.0.1:65253', // Định dạng phải là ws://127.0.0.1:65253
+        'ws://127.0.0.1:65253',
+        'ws://127.0.0.1:57521',
+      ],
+      // Thay đổi cấu hình styleSrc như sau:
+      styleSrc: [
+        "'self'",
+        'https:', // Cho phép tải kiểu CSS từ các địa chỉ HTTPS
+        "'sha256-2LsQpejoyTLfBAE8bzIvpZiyalNp3uIriW3eZ05/XRc='", // Hash của CSS được tin cậy
+        "'unsafe-inline'", // Cho phép kiểu CSS inline (sẽ bị bỏ qua nếu có hash hoặc nonce)
       ],
     },
   }),
 );
+
 //limit request
 const limiter = rateLimit({
   max: 100,
@@ -60,6 +59,12 @@ app.use('/api', limiter);
 
 //Reading data from req.body
 app.use(express.json({ limit: '10kb' }));
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: '10kb',
+  }),
+);
 app.use(cookieParser());
 //Data sanitiation against NoSql  query injection
 app.use(mongoSanitize());
