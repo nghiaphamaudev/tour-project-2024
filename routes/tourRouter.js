@@ -19,7 +19,7 @@ router
   .post(
     authController.protect,
     authController.restrictTo('admin', 'lead-guide'),
-    tourController.createTour,
+    tourController.createTour
   );
 
 router
@@ -34,12 +34,14 @@ router
   .patch(
     authController.protect,
     authController.restrictTo('admin', 'lead-guide'),
-    tourController.updateTour,
+    tourController.uploadTourImage,
+    tourController.resizeTourImage,
+    tourController.updateTour
   )
   .delete(
     authController.protect,
     authController.restrictTo('admin', 'lead-guide'),
-    tourController.deleteTour,
+    tourController.deleteTour
   );
 
 module.exports = router;

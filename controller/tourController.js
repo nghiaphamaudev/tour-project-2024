@@ -1,7 +1,54 @@
+const multer = require('multer');
+const sharp = require('sharp');
 const Tour = require('./../models/tourModel');
 const catchAsync = require('./../utils/catchAsync');
 const factory = require('./handleFactory');
 const AppError = require('./../utils/appError');
+
+const multerStorage = multer.memoryStorage();
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(new AppError('No image, Please upload only image', 400), false);
+  }
+};
+
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+exports.uploadTourImage = upload.fields([
+  { name: 'imageCover', maxCount: 1 },
+  { name: 'images', maxCount: 3 },
+]);
+
+exports.resizeTourImage = catchAsync(async (req, res, next) => {
+  if (!req.files.imageCover || !req.file.images) return next();
+  //1) Cover image
+  req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
+  await sharp(req.files.imageCover[0].buffer)
+    .resize(2000, 1333)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/tours/${req.body.imageCover}`);
+  //2) Images
+  req.body.images = [];
+  await Promise.all(
+    req.files.images.map(async (file, index) => {
+      const filename = `tour-${req.params.id}-${Date.now()}-${index + 1}.jpeg`;
+      await sharp(req.files.images[index].buffer)
+        .resize(2000, 1333)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/tours/${filename}`);
+
+      req.body.images.push(filename);
+    })
+  );
+
+  next();
+});
 exports.aliasTours = async (req, res, next) => {
   req.query.limit = '5';
   req.query.sort = '-price,-ratingsAverage';
@@ -29,7 +76,7 @@ exports.getToursWithin = catchAsync(async (req, res, next) => {
   if (!lat || !lng) {
     return new AppError(
       'Please provide latitu and longtitude in the format lat,lng!',
-      401,
+      401
     );
   }
   const tours = await Tour.find({
@@ -38,7 +85,6 @@ exports.getToursWithin = catchAsync(async (req, res, next) => {
     },
   });
 
-  console.log(distance, lat, lng, unit);
   res.status(200).json({
     status: 'success',
     result: tours.length,
@@ -57,7 +103,7 @@ exports.getDistances = catchAsync(async (req, res, next) => {
   if (!lat || !lng) {
     return new AppError(
       'Please provide latitu and longtitude in the format lat,lng!',
-      400,
+      400
     );
   }
   const distance = await Tour.aggregate([
