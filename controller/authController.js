@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken');
 const User = require('./../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const sendEmail = require('../utils/email');
+const Email = require('../utils/email');
+const { url } = require('inspector');
 
 const signToken = (id) => {
   return jwt.sign({ id: id }, process.env.JWT_SECRET, {
@@ -17,7 +18,7 @@ const createSendToken = (user, statusCode, res) => {
 
   const cookieOptions = {
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPRIES_IN * 24 * 60 * 60 * 1000,
+      Date.now() + process.env.JWT_COOKIE_EXPRIES_IN * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
   };
@@ -36,6 +37,9 @@ const createSendToken = (user, statusCode, res) => {
 };
 exports.signup = catchAsync(async (req, res, next) => {
   const newUser = await User.create(req.body);
+  const url = `${req.protocol}://${req.get('host')}/me`;
+  console.log(url);
+  await new Email(newUser, url).sendWelcome();
   createSendToken(newUser, 201, res);
 });
 
@@ -83,12 +87,12 @@ exports.protect = catchAsync(async (req, res, next) => {
   const currentUser = await User.findById(decoded.id);
   if (!currentUser) {
     return next(
-      new AppError('The user beloging to this token does not exist.', 401),
+      new AppError('The user beloging to this token does not exist.', 401)
     );
   }
   if (currentUser.changedPasswordAfter(decoded.iat)) {
     return next(
-      new AppError('User recently changed password! Please log in again', 401),
+      new AppError('User recently changed password! Please log in again', 401)
     );
   }
   req.user = currentUser;
@@ -102,7 +106,7 @@ exports.isLoggedIn = async (req, res, next) => {
     try {
       const decoded = await promisify(jwt.verify)(
         req.cookies.jwt,
-        process.env.JWT_SECRET,
+        process.env.JWT_SECRET
       );
       const currentUser = await User.findById(decoded.id);
       if (!currentUser) {
@@ -125,7 +129,7 @@ exports.restrictTo = (...roles) => {
     //roles ['admin','lead-guid']
     if (!roles.includes(req.user.role)) {
       return next(
-        new AppError('You do not have permission to perform this action', 403),
+        new AppError('You do not have permission to perform this action', 403)
       );
     }
     next();
@@ -142,16 +146,13 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
 
   //3) Sent if to user's email
-  const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
-
-  const message = `Forgot your password? Submit a Patch request with your new password and passwordConfirm to ${resetUrl} .\nIf you didn't forget your password, please ignore this email!`;
 
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Your password reset token (Valid  in 10 minutes) ',
-      message: message,
-    });
+    const resetUrl = `${req.protocol}://${req.get(
+      'host'
+    )}/api/v1/users/resetPassword/${resetToken}`;
+
+    await new Email(user, resetUrl).sendPasswordReset();
     res.status(200).json({
       status: 'success',
       messager: ' Token sent to email',
@@ -163,8 +164,8 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     return next(
       new AppError(
         'There was an error sending the email. Try again later!',
-        500,
-      ),
+        500
+      )
     );
   }
 });
@@ -196,7 +197,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
-  console.log(req.body);
   // 1) Get user from collection
   //Lấy từ protect
   const currentUser = await User.findById(req.user.id).select('+password');
@@ -208,7 +208,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   if (
     !(await currentUser.correctPassword(
       req.body.passwordCurrent,
-      currentUser.password,
+      currentUser.password
     ))
   ) {
     return next(new AppError('Your current password wrong', 401));
