@@ -98,8 +98,6 @@ userSchema.methods.createPasswordResetToken = function () {
     .update(resetToken)
     .digest('hex');
 
-  console.log({ resetToken }, this.passwordResetToken);
-
   //Tạo thời gian hết hạn token
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 

@@ -10,6 +10,7 @@ const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controller/errorController');
 const tourRouter = require('./routes/tourRouter');
 const userRouter = require('./routes/userRouter');
+const bookingRouter = require('./routes/bookingRouters');
 const reviewRouter = require('./routes/reviewRouter');
 const viewRouter = require('./routes/viewRouter');
 const hpp = require('hpp');
@@ -24,7 +25,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   helmet.contentSecurityPolicy({
     directives: {
-      defaultSrc: ["'self'", 'data:', 'blob:', 'https://*.cloudflare.com'],
+      defaultSrc: [
+        "'self'",
+        'data:',
+        'blob:',
+        'https://*.cloudflare.com',
+        'https://js.stripe.com/',
+      ],
       fontSrc: ["'self'", 'https:', 'data:'],
       scriptSrc: ["'self'", 'unsafe-inline'],
       scriptSrcElem: ["'self'", 'https:', 'https://*.cloudflare.com'],
@@ -32,18 +39,19 @@ app.use(
         "'self'",
         'data:',
         'https://*.cloudflare.com',
+        'https://js.stripe.com/',
         'ws://127.0.0.1:65253',
         'ws://127.0.0.1:57521',
       ],
-      // Thay đổi cấu hình styleSrc như sau:
       styleSrc: [
         "'self'",
-        'https:', // Cho phép tải kiểu CSS từ các địa chỉ HTTPS
-        "'sha256-2LsQpejoyTLfBAE8bzIvpZiyalNp3uIriW3eZ05/XRc='", // Hash của CSS được tin cậy
-        "'unsafe-inline'", // Cho phép kiểu CSS inline (sẽ bị bỏ qua nếu có hash hoặc nonce)
+        'https:',
+        "'sha256-2LsQpejoyTLfBAE8bzIvpZiyalNp3uIriW3eZ05/XRc='",
+        "'unsafe-inline'",
       ],
+      frameSrc: ["'self'", 'https://js.stripe.com/'], // Thêm 'https://js.stripe.com/' vào frame-src
     },
-  }),
+  })
 );
 
 //limit request
@@ -63,7 +71,7 @@ app.use(
   express.urlencoded({
     extended: true,
     limit: '10kb',
-  }),
+  })
 );
 app.use(cookieParser());
 //Data sanitiation against NoSql  query injection
@@ -84,7 +92,7 @@ app.use(
       'difficulty',
       'price',
     ],
-  }),
+  })
 );
 //Serving statics files
 
@@ -104,6 +112,7 @@ app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
+app.use('/api/v1/bookings', bookingRouter);
 
 //xử lí khi đường route không khớp với bất kì route nào được định nghĩa
 
